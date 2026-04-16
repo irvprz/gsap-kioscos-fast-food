@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-brand: #FF4500;
+  --color-brand-dark: #CC3700;
+  --color-surface: #F4F4F5;
+  --color-ink: #09090B;
+}
+
+body {
+  background-color: #F9F9F9;
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Utilidad para ocultar scrollbar pero permitir scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PRELOAD — Anti-flash para animaciones de scroll
+   ─────────────────────────────────────────────────────────────────────────────
+   Cómo funciona:
+   1. [data-animate] permanece invisible (sin ocupar espacio visual) hasta que
+      el hook usePreload carga fuentes e imágenes del viewport.
+   2. usePreload pone `data-preload-ready` en <html> → activa visibility.
+   3. GSAP/Framer Motion calculan posiciones sobre un layout ya estabilizado.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* Invisible pero ocupa espacio (evita layout shifts) */
+[data-animate] {
+  visibility: hidden;
+}
+
+/* Se activa cuando el preload termina */
+html[data-preload-ready] [data-animate] {
+  visibility: visible;
+}
+
+/* ── Overlay de carga (componente PreloadOverlay) ── */
+.preload-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 1.5rem;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              visibility 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity;
+}
+
+.preload-overlay.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Barra de progreso animada */
+.preload-bar-track {
+  width: 160px;
+  height: 2px;
+  background: #e5e5e5;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.preload-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--color-brand, #FF4500);
+  border-radius: 9999px;
+  animation: preload-fill 2.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes preload-fill {
+  0%   { width: 0%; }
+  65%  { width: 82%; }
+  100% { width: 100%; }
+}
