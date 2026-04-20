@@ -81,11 +81,11 @@ export function KioskSequenceStats() {
 
     // Set up GSAP context
     const gsctx = gsap.context(() => {
-      // Setup initial visibility
+      // Configuraciones iniciales
       gsap.set([giantText1.current, giantText2.current, giantText3.current], { xPercent: 150, opacity: 0 });
       gsap.set([kpiBox1.current, kpiBox2.current, kpiBox3.current], { opacity: 0, y: 50, scale: 0.95 });
       gsap.set(giantTextIntro.current, { xPercent: 120 });
-      gsap.set(standardTitle.current, { opacity: 0 });
+      gsap.set(standardTitle.current, { opacity: 0 }); // Inicia oculto
       gsap.set(blackCircleRef.current, { scale: 0 });
       gsap.set(contentWrapperRef.current, { opacity: 1 });
 
@@ -93,9 +93,15 @@ export function KioskSequenceStats() {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: 'top top',
-          end: '+=900%', // Increased scroll duration to make pauses feel significant
-          scrub: 1, 
+          end: '+=1000%', 
+          scrub: 1.5,
           pin: true,
+          snap: {
+            snapTo: "labels", // El gran cambio magico: fuerza a detener el scroll en etiquetas exactas!
+            duration: { min: 0.8, max: 2 }, 
+            delay: 0.1,
+            ease: "power2.inOut"
+          },
           onUpdate: self => {
              if (images[state.frame] && images[state.frame].complete) {
                 renderImage(images[state.frame]);
@@ -104,55 +110,61 @@ export function KioskSequenceStats() {
         }
       });
 
-      // Distribute frames dynamically: TRUE FREEZE during KPIs, fast transitions between them
-      // Intro ends at time: 12. Frame arrives at 40 and completely freezes.
-      tl.to(state, { frame: 40, snap: "frame", ease: "power1.out", duration: 12 }, 0); 
+      let t = 0;
       
-      // Between time 12 and 21, ZERO animations happen to state.frame (TRUE FREEZE)
-      
-      // At time 21, KPI leaves and fast transition begins to frame 100
-      tl.to(state, { frame: 100, snap: "frame", ease: "power1.inOut", duration: 5 }, 21);
-      
-      // Between time 26 and 35, ZERO animations happen to state.frame (TRUE FREEZE)
-      
-      // At time 35, KPI 2 leaves and fast transition begins to frame 150
-      tl.to(state, { frame: 150, snap: "frame", ease: "power1.inOut", duration: 5 }, 35);
-      
-      // Between time 40 and 45, ZERO animations happen to state.frame (TRUE FREEZE)
-      
-      // At time 45, the Outro plays and we finish the sequence frames
-      tl.to(state, { frame: FRAME_COUNT - 1, snap: "frame", ease: "none", duration: 11 }, 45);
+      tl.addLabel("start", t);
 
-      // Phase 0: Intro Title passing right to left over white background
-      tl.to(giantTextIntro.current, { xPercent: -120, duration: 10, ease: "none" }, 0);
+      // FASE 0: INTRODUCCIÓN 
+      tl.to(state, { frame: 40, snap: "frame", duration: 15, ease: "power1.inOut" }, t);
+      tl.to(giantTextIntro.current, { xPercent: -150, duration: 15, ease: "power1.out" }, t);
       
-      // Right before the text completely exits left (approx time 6 to 8), circle expands
-      tl.to(blackCircleRef.current, { scale: 50, duration: 4, ease: "power2.inOut" }, 6);
+      tl.to(blackCircleRef.current, { scale: 50, duration: 8, ease: "power2.inOut" }, t + 5);
+      tl.fromTo(standardTitle.current, { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 5, ease: "power2.out" }, t + 10);
+
+      t += 15; 
       
-      // Standard title fades in after transition to black 
-      tl.to(standardTitle.current, { opacity: 1, duration: 2 }, 10);
-
-      // Phase 1: KPI 1
-      tl.to(giantText1.current, { xPercent: 0, opacity: 1, duration: 3, ease: "power2.out" }, 12)
-        .to(kpiBox1.current, { opacity: 1, y: 0, scale: 1, duration: 2, ease: 'back.out(1.5)' }, 13)
-        // Pause (hold position) between 15 and 21
-        .to(giantText1.current, { xPercent: -150, opacity: 0, duration: 3, ease: "power2.in" }, 21)
-        .to(kpiBox1.current, { opacity: 0, scale: 0.9, y: 50, duration: 2, ease: "power2.in" }, 21);
-
-      // Phase 2: KPI 2
-      tl.to(giantText2.current, { xPercent: 0, opacity: 1, duration: 3, ease: "power2.out" }, 26)
-        .to(kpiBox2.current, { opacity: 1, y: 0, scale: 1, duration: 2, ease: 'back.out(1.5)' }, 27)
-        // Pause (hold position) between 29 and 35
-        .to(giantText2.current, { xPercent: -150, opacity: 0, duration: 3, ease: "power2.in" }, 35)
-        .to(kpiBox2.current, { opacity: 0, scale: 0.9, y: 50, duration: 2, ease: "power2.in" }, 35);
-
-      // Phase 3: KPI 3
-      tl.to(giantText3.current, { xPercent: 0, opacity: 1, duration: 3, ease: "power2.out" }, 40)
-        .to(kpiBox3.current, { opacity: 1, y: 0, scale: 1, duration: 2, ease: 'back.out(1.5)' }, 41);
-        // This last KPI holds until the section fades out!
+      // Añadimos una etiqueta exacta donde queremos que se FRENE automáticamente
+      tl.addLabel("kpi1", t);
       
-      // Phase 4 (Outro): Fade out everything except the black background wrapper
-      tl.to(contentWrapperRef.current, { opacity: 0, duration: 4, ease: "power2.inOut" }, 56);
+      // FASE 1: KPI 1 
+      tl.fromTo(giantText1.current, { xPercent: 150, opacity: 1 }, { xPercent: -150, duration: 25, ease: "none" }, t);
+      tl.to(kpiBox1.current, { opacity: 1, y: 0, scale: 1, duration: 5, ease: 'back.out(1.5)' }, t + 2);
+      tl.to(kpiBox1.current, { opacity: 0, scale: 0.9, y: 50, duration: 5, ease: 'power2.in' }, t + 18);
+
+      t += 25; 
+
+      // TRANSICIÓN 1: DEL KPI 1 AL KPI 2 
+      tl.to(state, { frame: 100, snap: "frame", duration: 15, ease: "power2.inOut" }, t);
+
+      t += 15; 
+
+      tl.addLabel("kpi2", t);
+
+      // FASE 2: KPI 2 
+      tl.fromTo(giantText2.current, { xPercent: 150, opacity: 1 }, { xPercent: -150, duration: 25, ease: "none" }, t);
+      tl.to(kpiBox2.current, { opacity: 1, y: 0, scale: 1, duration: 5, ease: 'back.out(1.5)' }, t + 2);
+      tl.to(kpiBox2.current, { opacity: 0, scale: 0.9, y: 50, duration: 5, ease: 'power2.in' }, t + 18);
+
+      t += 25;
+
+      // TRANSICIÓN 2: DEL KPI 2 AL KPI 3 (Girando de 100 DIRECTAMENTE al tamaño frontal máximo 178)
+      tl.to(state, { frame: FRAME_COUNT - 1, snap: "frame", duration: 15, ease: "power2.inOut" }, t);
+
+      t += 15;
+
+      tl.addLabel("kpi3", t);
+
+      // FASE 3: KPI 3 (Aparece SOLO cuando el kiosco ya está enorme de frente)
+      tl.fromTo(giantText3.current, { xPercent: 150, opacity: 1 }, { xPercent: -150, duration: 25, ease: "none" }, t);
+      tl.to(kpiBox3.current, { opacity: 1, y: 0, scale: 1, duration: 5, ease: 'back.out(1.5)' }, t + 2);
+      tl.to(kpiBox3.current, { opacity: 0, scale: 0.9, y: 50, duration: 5, ease: 'power2.in' }, t + 18);
+
+      t += 25;
+
+      tl.addLabel("end", t);
+
+      // OUTRO: Limpieza
+      tl.to(contentWrapperRef.current, { opacity: 0, duration: 10, ease: "power2.inOut" }, t);
 
       window.addEventListener('resize', () => {
          if (images[state.frame] && images[state.frame].complete) {
@@ -219,9 +231,9 @@ export function KioskSequenceStats() {
           
           <div
             ref={standardTitle}
-            className="absolute top-12 left-0 right-0 text-center"
+            className="absolute top-32 left-0 right-0 text-center z-[100]"
           >
-            <h2 className="text-2xl md:text-3xl font-display font-bold text-white">
+            <h2 className="text-2xl md:text-4xl font-display font-medium text-white drop-shadow-xl" style={{ textShadow: "0 4px 20px rgba(0,0,0,0.8)" }}>
               Resultados que hablan por sí solos
             </h2>
           </div>
