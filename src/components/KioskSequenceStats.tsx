@@ -97,9 +97,9 @@ export function KioskSequenceStats() {
           scrub: 1.5,
           pin: true,
           snap: {
-            snapTo: "labels", // El gran cambio magico: fuerza a detener el scroll en etiquetas exactas!
-            duration: { min: 0.8, max: 2 }, 
-            delay: 0.1,
+            snapTo: "labelsDirectional", // El directional previene retroceder accidentalmente y fuerza a ir al próximo KPI al hacer mínimo scroll
+            duration: { min: 0.5, max: 1.5 }, 
+            delay: 0.05, // Reduce el retraso para que el freno magnético se sienta inmediato
             ease: "power2.inOut"
           },
           onUpdate: self => {
@@ -111,60 +111,67 @@ export function KioskSequenceStats() {
       });
 
       let t = 0;
+      const TRANSITION_DUR = 10;
       
       tl.addLabel("start", t);
 
-      // FASE 0: INTRODUCCIÓN 
-      tl.to(state, { frame: 40, snap: "frame", duration: 15, ease: "power1.inOut" }, t);
-      tl.to(giantTextIntro.current, { xPercent: -150, duration: 15, ease: "power1.out" }, t);
-      
-      tl.to(blackCircleRef.current, { scale: 50, duration: 8, ease: "power2.inOut" }, t + 5);
-      tl.fromTo(standardTitle.current, { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 5, ease: "power2.out" }, t + 10);
+      // --- FASE 0: Inicio -> Mostrar el KPI 1 ---
+      tl.to(state, { frame: 40, snap: "frame", duration: TRANSITION_DUR, ease: "power2.inOut" }, t);
+      tl.to(giantTextIntro.current, { xPercent: -150, duration: TRANSITION_DUR, ease: "power1.out" }, t);
+      tl.to(blackCircleRef.current, { scale: 50, duration: TRANSITION_DUR * 0.8, ease: "power2.inOut" }, t);
+      tl.fromTo(standardTitle.current, { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: TRANSITION_DUR * 0.3 }, t + TRANSITION_DUR * 0.7);
 
-      t += 15; 
+      // El KPI 1 entra a escena al final de esta transición (en su posición de lectura y se frena)
+      tl.fromTo(giantText1.current, { xPercent: 120, opacity: 1 }, { xPercent: 0, duration: TRANSITION_DUR * 0.5, ease: "power2.out" }, t + TRANSITION_DUR * 0.5);
+      tl.to(kpiBox1.current, { opacity: 1, y: 0, scale: 1, duration: TRANSITION_DUR * 0.5, ease: 'back.out(1.5)' }, t + TRANSITION_DUR * 0.5);
+
+      t += TRANSITION_DUR; 
       
-      // Añadimos una etiqueta exacta donde queremos que se FRENE automáticamente
+      // AQUÍ ES DONDE SE DETIENE (SNAP) - El usuario tiene ambas cajas visibles en pantalla y el kiosco al lado
       tl.addLabel("kpi1", t);
       
-      // FASE 1: KPI 1 
-      tl.fromTo(giantText1.current, { xPercent: 150, opacity: 1 }, { xPercent: -150, duration: 25, ease: "none" }, t);
-      tl.to(kpiBox1.current, { opacity: 1, y: 0, scale: 1, duration: 5, ease: 'back.out(1.5)' }, t + 2);
-      tl.to(kpiBox1.current, { opacity: 0, scale: 0.9, y: 50, duration: 5, ease: 'power2.in' }, t + 18);
+      // --- FASE 1: Salir KPI 1 -> Kiosco Gira -> Entra KPI 2 ---
+      // Al hacer scroll, la caja 1 se va...
+      tl.to(giantText1.current, { xPercent: -150, duration: TRANSITION_DUR * 0.5, ease: "power2.in" }, t);
+      tl.to(kpiBox1.current, { opacity: 0, scale: 0.9, y: 50, duration: TRANSITION_DUR * 0.5, ease: 'power2.in' }, t);
 
-      t += 25; 
+      // Inmediatamente después, el kiosco gira
+      tl.to(state, { frame: 100, snap: "frame", duration: TRANSITION_DUR * 0.8, ease: "power2.inOut" }, t + TRANSITION_DUR * 0.1);
 
-      // TRANSICIÓN 1: DEL KPI 1 AL KPI 2 
-      tl.to(state, { frame: 100, snap: "frame", duration: 15, ease: "power2.inOut" }, t);
+      // Mientras el kiosco termina su giro, entra el KPI 2 a la pantalla
+      tl.fromTo(giantText2.current, { xPercent: 120, opacity: 1 }, { xPercent: 0, duration: TRANSITION_DUR * 0.5, ease: "power2.out" }, t + TRANSITION_DUR * 0.5);
+      tl.to(kpiBox2.current, { opacity: 1, y: 0, scale: 1, duration: TRANSITION_DUR * 0.5, ease: 'back.out(1.5)' }, t + TRANSITION_DUR * 0.5);
 
-      t += 15; 
+      t += TRANSITION_DUR;
 
+      // El snap frena EXACTAMENTE aquí, con el segundo KPI para ser leído
       tl.addLabel("kpi2", t);
 
-      // FASE 2: KPI 2 
-      tl.fromTo(giantText2.current, { xPercent: 150, opacity: 1 }, { xPercent: -150, duration: 25, ease: "none" }, t);
-      tl.to(kpiBox2.current, { opacity: 1, y: 0, scale: 1, duration: 5, ease: 'back.out(1.5)' }, t + 2);
-      tl.to(kpiBox2.current, { opacity: 0, scale: 0.9, y: 50, duration: 5, ease: 'power2.in' }, t + 18);
+      // --- FASE 2: Salir KPI 2 -> Kiosco Gira al Máximo (Frontal) -> Entra KPI 3 ---
+      tl.to(giantText2.current, { xPercent: -150, duration: TRANSITION_DUR * 0.5, ease: "power2.in" }, t);
+      tl.to(kpiBox2.current, { opacity: 0, scale: 0.9, y: 50, duration: TRANSITION_DUR * 0.5, ease: 'power2.in' }, t);
 
-      t += 25;
+      // Kiosco girando DIRECTAMENTE de frame 100 hasta que se posicione frontal enorme (FRAME_COUNT - 1)
+      tl.to(state, { frame: FRAME_COUNT - 1, snap: "frame", duration: TRANSITION_DUR * 0.8, ease: "power2.inOut" }, t + TRANSITION_DUR * 0.1);
 
-      // TRANSICIÓN 2: DEL KPI 2 AL KPI 3 (Girando de 100 DIRECTAMENTE al tamaño frontal máximo 178)
-      tl.to(state, { frame: FRAME_COUNT - 1, snap: "frame", duration: 15, ease: "power2.inOut" }, t);
+      // El KPI 3 asoma solo al final, apoyando al render final del Kiosco grande frontal
+      tl.fromTo(giantText3.current, { xPercent: 120, opacity: 1 }, { xPercent: 0, duration: TRANSITION_DUR * 0.5, ease: "power2.out" }, t + TRANSITION_DUR * 0.5);
+      tl.to(kpiBox3.current, { opacity: 1, y: 0, scale: 1, duration: TRANSITION_DUR * 0.5, ease: 'back.out(1.5)' }, t + TRANSITION_DUR * 0.5);
 
-      t += 15;
+      t += TRANSITION_DUR;
 
+      // Se detiene magnéticamente aquí
       tl.addLabel("kpi3", t);
 
-      // FASE 3: KPI 3 (Aparece SOLO cuando el kiosco ya está enorme de frente)
-      tl.fromTo(giantText3.current, { xPercent: 150, opacity: 1 }, { xPercent: -150, duration: 25, ease: "none" }, t);
-      tl.to(kpiBox3.current, { opacity: 1, y: 0, scale: 1, duration: 5, ease: 'back.out(1.5)' }, t + 2);
-      tl.to(kpiBox3.current, { opacity: 0, scale: 0.9, y: 50, duration: 5, ease: 'power2.in' }, t + 18);
+      // --- FASE 3: OUTRO ---
+      tl.to(giantText3.current, { xPercent: -150, duration: TRANSITION_DUR * 0.5, ease: "power2.in" }, t);
+      tl.to(kpiBox3.current, { opacity: 0, scale: 0.9, y: 50, duration: TRANSITION_DUR * 0.5, ease: 'power2.in' }, t);
+      
+      // Limpieza general, despide todo el contenedor
+      tl.to(contentWrapperRef.current, { opacity: 0, duration: TRANSITION_DUR * 0.5, ease: "power2.inOut" }, t + TRANSITION_DUR * 0.2);
 
-      t += 25;
-
+      t += TRANSITION_DUR;
       tl.addLabel("end", t);
-
-      // OUTRO: Limpieza
-      tl.to(contentWrapperRef.current, { opacity: 0, duration: 10, ease: "power2.inOut" }, t);
 
       window.addEventListener('resize', () => {
          if (images[state.frame] && images[state.frame].complete) {
@@ -202,19 +209,19 @@ export function KioskSequenceStats() {
         <div className="absolute inset-0 flex items-center justify-center overflow-hidden z-20 pointer-events-none">
           <div 
             ref={giantText1}
-            className="absolute whitespace-nowrap text-[18vw] font-display font-bold text-white/5 tracking-tighter"
+            className="absolute whitespace-nowrap text-[18vw] font-display font-bold text-white/15 tracking-tighter"
           >
             +40% Revenue Lift
           </div>
           <div 
             ref={giantText2}
-            className="absolute whitespace-nowrap text-[18vw] font-display font-bold text-white/5 tracking-tighter"
+            className="absolute whitespace-nowrap text-[18vw] font-display font-bold text-white/15 tracking-tighter"
           >
             -70% Labor Costs
           </div>
           <div 
             ref={giantText3}
-            className="absolute whitespace-nowrap text-[18vw] font-display font-bold text-white/5 tracking-tighter"
+            className="absolute whitespace-nowrap text-[18vw] font-display font-bold text-white/15 tracking-tighter"
           >
             95% Autonomy
           </div>
@@ -223,7 +230,7 @@ export function KioskSequenceStats() {
         {/* Layer 3: Underlying Canvas Sequence */}
         <canvas 
           ref={canvasRef} 
-          className="absolute inset-0 w-full h-full object-cover z-30 pointer-events-auto"
+          className="absolute inset-0 w-full h-full object-cover z-30 pointer-events-auto scale-95"
         />
 
         {/* Layer 4: Interactive Overlays Context */}
