@@ -1,9 +1,10 @@
 import { motion, useScroll, useTransform } from "motion/react";
-import { ArrowRight, TrendingUp, SlidersHorizontal, PlaySquare, CreditCard, CheckCircle2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { ArrowRight, SlidersHorizontal, PlaySquare, CreditCard, CheckCircle2, TrendingUp } from "lucide-react";
+import { useState, useRef } from "react";
 import { useGSAPInit } from "./hooks/useGSAP";
 import { PreloadOverlay } from "./components/PreloadOverlay";
 import { KioskSequenceStats } from "./components/KioskSequenceStats";
+import { HeroSequence } from "./components/HeroSequence";
 
 const EASE = [0.16, 1, 0.3, 1];
 
@@ -28,130 +29,7 @@ function Navbar() {
   );
 }
 
-function Hero() {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"]
-  });
-  
-  // El contenedor mide 200vh. El elemento sticky mide 100vh.
-  // Por lo tanto, está "pineado" durante los primeros 100vh de scroll.
-  // Esto corresponde a scrollYProgress de 0 a 0.5.
-  // Animamos la imagen 3D en este intervalo para que termine antes de que la sección empiece a subir.
-  const rotateY = useTransform(scrollYProgress, [0, 0.5], [-35, 0]);
-  const rotateX = useTransform(scrollYProgress, [0, 0.5], [15, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.5], [0.7, 1]);
-  const x = useTransform(scrollYProgress, [0, 0.5], ["15%", "0%"]);
-  
-  // Opcional: un ligero fade out cuando la sección ya está subiendo (0.5 a 1)
-  const heroOpacity = useTransform(scrollYProgress, [0.5, 1], [1, 0]);
-
-  return (
-    <section ref={ref} className="relative h-[200vh] bg-surface">
-      <motion.div 
-        style={{ opacity: heroOpacity }}
-        className="sticky top-0 h-screen flex flex-col justify-center px-6 md:px-12 overflow-hidden pt-20"
-      >
-        <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
-          
-          <div className="max-w-2xl">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: EASE }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand/10 text-brand font-semibold text-sm mb-8"
-            >
-              <span className="w-2 h-2 rounded-full bg-brand animate-pulse"></span>
-              La evolución del Fast Food
-            </motion.div>
-            
-            <motion.h1 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: EASE, delay: 0.1 }}
-              className="text-5xl md:text-7xl font-display font-bold tracking-tighter text-ink leading-[1.1] mb-6"
-            >
-              Multiplica tus ventas con kioscos de <span className="text-brand">autoatención.</span>
-            </motion.h1>
-            
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: EASE, delay: 0.2 }}
-              className="text-lg md:text-xl text-ink/70 font-medium mb-10 leading-relaxed"
-            >
-              Permite a tus clientes ordenar a su ritmo, personalizar sus platos y pagar sin hacer fila. Aumenta tu ticket promedio con upselling automático y banners promocionales.
-            </motion.p>
-
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: EASE, delay: 0.3 }}
-              className="flex flex-wrap items-center gap-4"
-            >
-              <button className="bg-brand text-white px-8 py-4 rounded-full text-lg font-semibold flex items-center gap-2 hover:bg-brand-dark transition-colors shadow-xl shadow-brand/20">
-                Ver Kioscos en acción <ArrowRight className="w-5 h-5" />
-              </button>
-            </motion.div>
-            
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 0.6 }}
-              className="mt-10 flex items-center gap-6 text-sm font-medium text-ink/50"
-            >
-              <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-brand" /> Fácil integración</div>
-              <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-brand" /> Pagos integrados</div>
-            </motion.div>
-          </div>
-
-          {/* Hero Image / Kiosk Mockup with Parallax & 3D Scroll */}
-          <div className="relative h-[600px] w-full hidden lg:block" style={{ perspective: "1200px" }}>
-            <motion.div 
-              style={{ rotateY, rotateX, scale, x }} 
-              className="absolute inset-0 flex items-center justify-center"
-            >
-              {/* Placeholder para imagen REAL del Kiosco. 
-                  Recomendación: Un render 3D del kiosco o una foto de estudio en formato vertical */}
-              <div className="relative w-[320px] h-[580px] bg-ink rounded-[2.5rem] shadow-2xl border-[8px] border-ink overflow-hidden flex flex-col">
-                {/* Pantalla del kiosco */}
-                <img 
-                  src="https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=800&auto=format&fit=crop" 
-                  alt="Interfaz del kiosco" 
-                  className="w-full h-full object-cover opacity-80"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
-                  <div className="w-full bg-white rounded-xl p-4 shadow-lg">
-                    <p className="text-xs text-brand font-bold uppercase mb-1">Oferta del día</p>
-                    <p className="text-ink font-bold text-sm">Combo Hamburguesa Doble</p>
-                    <button className="w-full mt-3 bg-brand text-white py-2 rounded-lg text-sm font-bold">Ordenar ahora</button>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Floating Elements */}
-              <motion.div 
-                animate={{ y: [-10, 10, -10] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -left-12 top-32 bg-white p-4 rounded-2xl shadow-2xl flex items-center gap-4"
-                style={{ transform: "translateZ(50px)" }}
-              >
-                <div className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-xs text-ink/50 font-bold uppercase">Upsell Exitoso</p>
-                  <p className="text-sm font-bold text-ink">+ Papas Grandes</p>
-                </div>
-              </motion.div>
-            </motion.div>
-          </div>
-        </div>
-      </motion.div>
-    </section>
-  );
-}
+// Hero is now HeroSequence — see src/components/HeroSequence.tsx
 
 function ClientLogos() {
   return (
@@ -462,7 +340,7 @@ export default function App() {
       <PreloadOverlay />
       <div data-animate className="bg-white min-h-screen selection:bg-brand selection:text-white font-sans">
       <Navbar />
-      <Hero />
+      <HeroSequence />
       <ClientLogos />
       <ParallaxImageBreak />
       <Features />
